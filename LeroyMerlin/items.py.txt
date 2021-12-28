@@ -1,0 +1,28 @@
+import scrapy
+from scrapy.loader.processors import Compose, MapCompose, TakeFirst
+
+
+def cleaner_url(url):
+    if url[:2] == '//':
+        return f'https:{url}'
+    return url
+
+
+def parse_links(links):
+    links = [i.strip().strip(':').replace('\xa0', ' ') for i in links]
+    result = dict(zip(links[1::3], links[2::3]))
+    return result
+
+
+class LeroyMerlinItem(scrapy.Item):
+    # define the fields for item here:
+    _id = scrapy.Field()
+
+    title = scrapy.Field(input_processor=MapCompose(lambda x: x.split(',')),
+                         output_processor=TakeFirst())
+
+    images = scrapy.Field(input_processor=MapCompose(cleaner_url))
+
+    links = scrapy.Field(output_processor=Compose(parse_links))
+
+    url = scrapy.Field(output_processor=TakeFirst())
